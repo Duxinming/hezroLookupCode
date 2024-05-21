@@ -18,6 +18,7 @@ app.use(bodyParser.json())
 
 let API_HOST = '192.168.84.17:30018'
 let TOKEN = '2fa9a3a0-ed24-4536-9ef6-77c59b3d566e'
+let TENANTID = 3
 
 // excel文件类径
 // const excelFilePath = './excel/lookUpCode.xlsx'
@@ -41,9 +42,12 @@ let config = {
 
 const getLovInfo = (lovCode) =>
   Axios.get(
-    `http://${API_HOST}/hpfm/v1/3/lov-headers?lovCode=${lovCode}&page=0&size=10&tenantId=3`,
+    `http://${API_HOST}/hpfm/v1/${TENANTID}/lov-headers?lovCode=${lovCode}&page=0&size=10&tenantId=3`,
     config
   )
+
+const getLovDteail = (lovId) =>
+  Axios.get(`http://${API_HOST}/hpfm/v1/lov-headers/${lovId}?size=200`, config)
 
 const login = () =>
   Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config)
@@ -73,7 +77,7 @@ const dataArr = []
 //           lovCode,
 //           tenantId: 3,
 //         }
-//         Axios.post(`http://${API_HOST}/hpfm/v1/3/lov-values`, obj, config)
+//         Axios.post(`http://${API_HOST}/hpfm/v1/${TENANTID}/lov-values`, obj, config)
 //           .then((res) => {
 //             console.log(res.data)
 //           })
@@ -89,12 +93,14 @@ app.post('/login', async (req, res) => {
   const { ip, token } = req.body
   API_HOST = ip
   TOKEN = token
-  //   config = {
-  //     headers: {
-  //       Authorization: `bearer ${token}`,
-  //     },
-  //   }
-  //   const info = await login()
+  config = {
+    headers: {
+      Authorization: `bearer ${token}`,
+    },
+  }
+  const info = await login()
+  const { tenantId } = info
+  TENANTID = tenantId
   if (info) {
     return res.json({
       code: 1,
@@ -123,10 +129,24 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     })
   }
   const data = []
-  const lovInfo = await getLovInfo(lovCode)
-  console.log(lovInfo)
+  const {
+    data: { content },
+  } = await getLovInfo(lovCode)
+  let isCreate = true
+  let lovValueData = []
+  if (content.length === 1) {
+    isCreate = false
+    const { lovId } = content[0]
+    const { content: lovDetailContent } = await getLovDteail(lovId)
+    lovValueData = lovDetailContent.map(({ value }) => value)
+  }
   info.forEach(([value, meaning, orderSeq, tag, description]) => {
     if (value) {
+      // 0 待创建 1 待更新
+      let status = 0
+      if (lovValueData.length > 0 && lovValueData.includes(value)) {
+        status = 1
+      }
       data.push({
         value,
         meaning,
@@ -138,13 +158,15 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         tag,
         lovId: null,
         lovCode,
-        tenantId: 3,
+        tenantId: TENANTID,
+        status,
       })
     }
   })
   return res.json({
     code: 1,
     msg: 'success',
+    isCreate,
     lovCode: lovCode.replace('\n', ''),
     data,
   })
