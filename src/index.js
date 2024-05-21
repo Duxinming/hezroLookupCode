@@ -98,10 +98,9 @@ app.post('/login', async (req, res) => {
       Authorization: `bearer ${token}`,
     },
   }
-  const info = await login()
+  const { data: info } = await login()
   const { tenantId } = info
   TENANTID = tenantId
-  console.log(info)
   if (info) {
     return res.json({
       code: 1,
