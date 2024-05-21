@@ -99,8 +99,6 @@ app.post('/login', async (req, res) => {
     },
   }
   const { data: info } = await login()
-  const { tenantId } = info
-  TENANTID = tenantId
   if (info) {
     return res.json({
       code: 1,
@@ -134,9 +132,13 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   } = await getLovInfo(lovCode)
   let isCreate = true
   let lovValueData = []
-  if (content.length === 1) {
+  if (content.filter(({ enabledFlag }) => enabledFlag).length === 1) {
     isCreate = false
-    const { lovId } = content[0]
+    const { lovId, tenantId } = content.filter(
+      ({ enabledFlag }) => enabledFlag
+    )[0]
+    // 当前值集租户赋值
+    TENANTID = tenantId
     const { content: lovDetailContent } = await getLovDteail(lovId)
     lovValueData = lovDetailContent.map(({ value }) => value)
   }
