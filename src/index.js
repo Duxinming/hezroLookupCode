@@ -33,7 +33,7 @@ const sheets = xlsx.parse(excelFilePath)
 
 // const lovCode = sheet.data[0][0]
 
-const config = {
+let config = {
   headers: {
     Authorization: `bearer ${TOKEN}`,
   },
