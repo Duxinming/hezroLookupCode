@@ -55,6 +55,40 @@ const getLovDteail = (lovId) =>
 const login = () =>
   Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config)
 
+const createLookupCode = (lovInfo) =>
+  Axios.post(
+    `http://${API_HOST}/hpfm/v1${TENANTID ? `/${TENANTID}` : ''}/lov-headers`,
+    {
+      ...lovInfo,
+      tenantId: TENANTID,
+    },
+    config
+  )
+const createLookupCodeItem = (obj) =>
+  Axios.post(
+    `http://${API_HOST}/hpfm/v1${TENANTID ? `/${TENANTID}` : ''}/lov-values`,
+    obj,
+    config
+  )
+    .then((res) => {
+      console.log(res.data)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+const updateLookupCodeItem = (obj) =>
+  Axios.put(
+    `http://${API_HOST}/hpfm/v1${TENANTID ? `/${TENANTID}` : ''}/lov-values`,
+    obj,
+    config
+  )
+    .then((res) => {
+      console.log(res.data)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
 const dataArr = []
 // 输出每行内容
 // console.log(sheet.data)
@@ -93,9 +127,10 @@ const dataArr = []
 // })()
 
 app.post('/login', async (req, res) => {
-  const { ip, token } = req.body
+  const { ip, token, tenantId } = req.body
   API_HOST = ip
   TOKEN = token
+  TENANTID = tenantId
   config = {
     headers: {
       Authorization: `bearer ${token}`,
@@ -122,11 +157,11 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   // 打印页面信息..
   const sheet = sheets[0]
 
-  const [[lovCode], _, ...info] = sheet.data
-  if (!lovCode) {
+  const [[lovCode, lovName], _, ...info] = sheet.data
+  if (!lovCode || !lovName) {
     return res.json({
       code: 0,
-      msg: '没有正确的code,请检查！',
+      msg: '没有正确的编码或名称,请检查！',
     })
   }
   const data = []
@@ -137,11 +172,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   let lovValueData = []
   if (content.filter(({ enabledFlag }) => enabledFlag).length === 1) {
     isCreate = false
-    const { lovId, tenantId } = content.filter(
-      ({ enabledFlag }) => enabledFlag
-    )[0]
-    // 当前值集租户赋值
-    TENANTID = tenantId
+    const { lovId } = content.filter(({ enabledFlag }) => enabledFlag)[0]
     const lovDteailRes = await getLovDteail(lovId)
     console.log(lovDteailRes.data)
     const {
@@ -179,8 +210,38 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     msg: 'success',
     isCreate,
     lovCode: lovCode.replace('\n', ''),
+    lovName: lovName.replace('\n', ''),
     data,
   })
+})
+
+app.post('/import', async (req, res) => {
+  const { isCreate, lovInfo = { lovCode, lovName, data } } = req.body
+  if (isCreate) {
+    createLookupCode({
+      lovCode,
+      lovName,
+      lovTypeCode: 'IDP',
+      enabledFlag: 1,
+      mustPageFlag: 1,
+    }).then((r) => {
+      if (r) {
+        data.forEach((item) => {
+          // 数组格式, 根据不同的索引取数据
+          createLookupCodeItem(item)
+        })
+      }
+    })
+  } else {
+    data.forEach((item) => {
+      // 数组格式, 根据不同的索引取数据
+      if (item.status === 1) {
+        createLookupCodeItem(item)
+      } else {
+        updateLookupCodeItem(item)
+      }
+    })
+  }
 })
 
 app.get('/list', (req, res) => {

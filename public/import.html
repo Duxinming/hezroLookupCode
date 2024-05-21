@@ -25,20 +25,25 @@
 
         <tbody id="tBody"></tbody>
     </table>
+    <button onclick="importData()">导入</button>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-    let lovInfo = []
+    let lovInfo = {
+        lovCode: "",
+        lovName: "",
+        data: []
+    }
     function changfile (e) {
         const file = e.files[0]
         const formData = new FormData()
         formData.append('file', file)
         axios.post('/upload', formData).then(res => {
-            const { data, isCreate } = res.data
-            document.getElementById('lookupCodeStatus').innerHTML = isCreate ? '需要新建' : '需要更新'
+            const { data, isCreate, lovCode, lovName } = res.data
+            document.getElementById('lookupCodeStatus').innerHTML = isCreate ? '待新建' : '已新建'
             if (data.length) {
                 const table = document.getElementById('tBody')
-                lovInfo = data
+                lovInfo = { lovCode, lovName, data }
                 data.forEach(item => {
                     const tr = document.createElement('tr')
                     const valueTd = document.createElement('td')
@@ -63,6 +68,14 @@
                 })
             }
         })
+    }
+    function importData () {
+        if (document.getElementById('lookupCodeStatus').innerHTML) {
+            const isCreate = document.getElementById('lookupCodeStatus').innerHTML === '待新建' ? true : false
+            axios.post('/import', { isCreate, lovInfo }).then(res => {
+                console.log(res)
+            })
+        }
     }
 </script>
 <style>
