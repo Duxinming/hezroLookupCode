@@ -10,6 +10,19 @@
 <body>
     <div>这里是导入功能</div>
     <input type="file" onchange="changfile(this)" />
+    <table>
+        <header>
+            <tr>
+                <th>值</th>
+                <th>含义</th>
+                <th>排序号</th>
+                <th>标记</th>
+                <th>描述</th>
+            </tr>
+        </header>
+
+        <tbody id="tBody"></tbody>
+    </table>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
@@ -19,8 +32,45 @@
         formData.append('file', file)
         axios.post('/upload', formData).then(res => {
             console.log(res.data)
+            const { data } = res.data
+            if (data.length) {
+                const table = document.getElementById('tBody')
+                data.forEach(item => {
+                    const tr = document.createElement('tr')
+                    const valueTd = document.createElement('td')
+                    const meaningTd = document.createElement('td')
+                    const orderSeqTd = document.createElement('td')
+                    const tagTd = document.createElement('td')
+                    const descriptionTd = document.createElement('td')
+                    const statusTd = document.createElement('td')
+                    valueTd.innerHTML = item.value || ''
+                    meaningTd.innerHTML = item.meaning || ''
+                    orderSeqTd.innerHTML = item.orderSeq || ''
+                    tagTd.innerHTML = item.tag || ''
+                    descriptionTd.innerHTML = item.description || ''
+                    tr.appendChild(valueTd)
+                    tr.appendChild(meaningTd)
+                    tr.appendChild(orderSeqTd)
+                    tr.appendChild(tagTd)
+                    tr.appendChild(descriptionTd)
+                    table.appendChild(tr)
+                })
+            }
         })
     }
 </script>
+<style>
+    table,
+    body {
+        width: 100%;
+    }
+
+
+    table,
+    th,
+    td {
+        border: 1px solid #000;
+    }
+</style>
 
 </html>

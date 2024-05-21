@@ -8,10 +8,12 @@
 </head>
 
 <body>
-    <button onclick="go('import')">点击</button>
     <input id="ip" type="text" />
     <input id="token" type="text">
     <button onclick="login()">验证登录</button>
+    <div id="loginStatus"></div>
+    当前登陆人：<div id="username"></div>
+    <button onclick="go('import')">点击</button>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
@@ -23,8 +25,14 @@
         axios.post('/login', {
             ip: document.getElementById('ip').value,
             token: document.getElementById('token').value
-        }).then(res => {
-            console.log(res)
+        }).then(({ data: { code, info } }) => {
+            if (!code) {
+                document.getElementById('loginStatus').innerHTML = '登录失败'
+            } else {
+                document.getElementById('loginStatus').innerHTML = '登录成功'
+                document.getElementById('username').innerHTML = info.realName
+                alert('登录成功')
+            }
         })
     }
 </script>

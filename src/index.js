@@ -10,7 +10,7 @@ const multer = require('multer')
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
 
-const mock = require('./mock')
+const { data, info } = require('./mock')
 
 const app = express()
 app.use(express.static('public'))
@@ -94,8 +94,19 @@ app.post('/login', async (req, res) => {
       Authorization: `bearer ${token}`,
     },
   }
-  const info = await login()
-  console.log(info)
+  //   const info = await login()
+  if (info) {
+    return res.json({
+      code: 1,
+      msg: 'success',
+      info,
+    })
+  } else {
+    return res.json({
+      code: 0,
+      msg: '登录失败',
+    })
+  }
 })
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -107,13 +118,13 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   const [[lovCode], _, ...info] = sheet.data
   if (!lovCode) {
     return res.json({
-      code: 1,
+      code: 0,
       msg: '没有正确的code,请检查！',
     })
   }
   const data = []
-  const lovInfo = await getLovInfo(lovCode)
-  console.log(lovInfo)
+  //   const lovInfo = await getLovInfo(lovCode)
+  //   console.log(lovInfo)
   info.forEach(([value, meaning, orderSeq, tag, description]) => {
     if (value) {
       data.push({
@@ -132,7 +143,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
   })
   return res.json({
-    code: 0,
+    code: 1,
     msg: 'success',
     lovCode: lovCode.replace('\n', ''),
     data,
