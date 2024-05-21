@@ -47,7 +47,10 @@ const getLovInfo = (lovCode) =>
   )
 
 const getLovDteail = (lovId) =>
-  Axios.get(`http://${API_HOST}/hpfm/v1/lov-headers/${lovId}?size=200`, config)
+  Axios.get(
+    `http://${API_HOST}/hpfm/v1/lov-headers/${lovId}/values?size=200`,
+    config
+  )
 
 const login = () =>
   Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config)
