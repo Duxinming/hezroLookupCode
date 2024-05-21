@@ -20,20 +20,6 @@ let API_HOST = '192.168.84.17:30018'
 let TOKEN = '2fa9a3a0-ed24-4536-9ef6-77c59b3d566e'
 let TENANTID = 3
 
-// excel文件类径
-// const excelFilePath = './excel/lookUpCode.xlsx'
-
-//解析excel, 获取到所有sheets
-// const sheets = xlsx.parse(excelFilePath)
-
-// 查看页面数
-// console.log(sheets.length)
-
-// 打印页面信息..
-// const sheet = sheets[0]
-
-// const lovCode = sheet.data[0][0]
-
 let config = {
   headers: {
     Authorization: `bearer ${TOKEN}`,
@@ -71,10 +57,12 @@ const createLookupCodeItem = (obj) =>
     config
   )
     .then((res) => {
-      console.log(res.data)
+      console.log('res', res.data)
+      return res ? true : false
     })
     .catch((err) => {
-      console.log(err)
+      console.log('err', err)
+      return false
     })
 
 const updateLookupCodeItem = (obj) =>
@@ -84,53 +72,19 @@ const updateLookupCodeItem = (obj) =>
     config
   )
     .then((res) => {
-      console.log(res.data)
+      console.log('res', res.data)
+      return res ? true : false
     })
     .catch((err) => {
-      console.log(err)
+      console.log('err', err)
+      return false
     })
-const dataArr = []
-// 输出每行内容
-// console.log(sheet.data)
-
-// !(async function () {
-//   const { data } = await getLovInfo()
-//   if (data.content.length === 1) {
-//     const { lovId } = data.content[0]
-//     sheet.data.forEach((row, index) => {
-//       // 数组格式, 根据不同的索引取数据
-//       if (index > 1 && row[0] && row[1]) {
-//         const [value, meaning, orderSeq, tag, description] = row
-//         const obj = {
-//           value,
-//           meaning,
-//           orderSeq,
-//           startDateActive: '',
-//           endDateActive: '',
-//           enabledFlag: 1,
-//           description,
-//           tag,
-//           lovId,
-//           lovCode,
-//           tenantId: 3,
-//         }
-//         Axios.post(`http://${API_HOST}/hpfm/v1/${TENANTID}/lov-values`, obj, config)
-//           .then((res) => {
-//             console.log(res.data)
-//           })
-//           .catch((err) => {
-//             console.log(err)
-//           })
-//       }
-//     })
-//   }
-// })()
 
 app.post('/login', async (req, res) => {
   const { ip, token, tenantId } = req.body
   API_HOST = ip
   TOKEN = token
-  TENANTID = tenantId
+  TENANTID = Number(tenantId)
   config = {
     headers: {
       Authorization: `bearer ${token}`,
@@ -170,26 +124,30 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   } = await getLovInfo(lovCode)
   let isCreate = true
   let lovValueData = []
+  let lovId = null
   if (content.filter(({ enabledFlag }) => enabledFlag).length === 1) {
     isCreate = false
-    const { lovId } = content.filter(({ enabledFlag }) => enabledFlag)[0]
+    const { lovId: currentLovId } = content.filter(({ enabledFlag }) => enabledFlag)[0]
+    lovId = currentLovId
     const lovDteailRes = await getLovDteail(lovId)
-    console.log(lovDteailRes.data)
     const {
       data: { content: lovDetailContent },
     } = lovDteailRes
     if (lovDetailContent.length) {
-      lovValueData = lovDetailContent.map(({ value }) => value)
+      lovValueData = lovDetailContent
     }
   }
   info.forEach(([value, meaning, orderSeq, tag, description]) => {
     if (value) {
       // 0 待创建 1 待更新
       let status = 0
-      if (lovValueData.length > 0 && lovValueData.includes(value)) {
+      let obj = {}
+      if (lovValueData.length > 0 && lovValueData.filter((e) => e.value === value.toString()).length === 1) {
+        obj = lovValueData.filter((e) => e.value === value.toString())[0]
         status = 1
       }
       data.push({
+        ...obj,
         value,
         meaning,
         orderSeq,
@@ -198,7 +156,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         enabledFlag: 1,
         description,
         tag,
-        lovId: null,
+        lovId,
         lovCode,
         tenantId: TENANTID,
         status,
@@ -216,7 +174,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 })
 
 app.post('/import', async (req, res) => {
-  const { isCreate, lovInfo = { lovCode, lovName, data } } = req.body
+  const { isCreate, lovInfo: { lovCode, lovName, data } } = req.body
   if (isCreate) {
     createLookupCode({
       lovCode,
@@ -226,20 +184,26 @@ app.post('/import', async (req, res) => {
       mustPageFlag: 1,
     }).then((r) => {
       if (r) {
-        data.forEach((item) => {
+        Promise.all(data.map(async (item) => {
           // 数组格式, 根据不同的索引取数据
-          createLookupCodeItem(item)
+          return await createLookupCodeItem(item)
+        })).then(r => {
+          return res.json({ success: r.every(e => e) })
         })
+      } else {
+        return res.json({ success: false })
       }
     })
   } else {
-    data.forEach((item) => {
+    Promise.all(data.map(async (item) => {
       // 数组格式, 根据不同的索引取数据
-      if (item.status === 1) {
-        createLookupCodeItem(item)
+      if (item.status === 0) {
+        return await createLookupCodeItem(item)
       } else {
-        updateLookupCodeItem(item)
+        return await updateLookupCodeItem(item)
       }
+    })).then(r => {
+      return res.json({ success: r.every(e => e) })
     })
   }
 })

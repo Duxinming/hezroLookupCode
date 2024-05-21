@@ -74,6 +74,9 @@
             const isCreate = document.getElementById('lookupCodeStatus').innerHTML === '待新建' ? true : false
             axios.post('/import', { isCreate, lovInfo }).then(res => {
                 console.log(res)
+                if(res.success){
+                    alert('操作成功')
+                }
             })
         }
     }
