@@ -140,6 +140,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     // 当前值集租户赋值
     TENANTID = tenantId
     const lovDteailRes = await getLovDteail(lovId)
+    console.log(lovDteailRes.data)
     const {
       data: { content: lovDetailContent },
     } = lovDteailRes
