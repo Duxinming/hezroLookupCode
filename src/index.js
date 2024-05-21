@@ -88,6 +88,11 @@ const dataArr = []
 app.post('/login', async (req, res) => {
   const { ip, token } = req.body
   TOKEN = token
+  config = {
+    headers: {
+      Authorization: `bearer ${token}`,
+    },
+  }
   const info = await login()
   console.log(info)
 })
