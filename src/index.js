@@ -4,7 +4,8 @@ const xlsx = require('node-xlsx')
 const Axios = require('axios')
 // 引入 express 模块
 const express = require('express')
-
+// 引入 body-parser 模块
+const bodyParser = require('body-parser')
 const multer = require('multer')
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
@@ -13,9 +14,10 @@ const mock = require('./mock')
 
 const app = express()
 app.use(express.static('public'))
+app.use(bodyParser.json())
 
 const API_HOST = '192.168.84.17:30038'
-const TOKEN = 'bd8cabb6-8431-42e1-8e77-96fc0ef2fb62'
+let TOKEN = 'bd8cabb6-8431-42e1-8e77-96fc0ef2fb62'
 
 // excel文件类径
 const excelFilePath = './excel/lookUpCode.xlsx'
@@ -42,6 +44,9 @@ const getLovInfo = (lovCode) =>
     `http://${API_HOST}/hpfm/v1/3/lov-headers?lovCode=${lovCode}&page=0&size=10&tenantId=3`,
     config
   )
+
+const login = () =>
+  Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config)
 
 const dataArr = []
 // 输出每行内容
@@ -79,6 +84,13 @@ const dataArr = []
 //     })
 //   }
 // })()
+
+app.post('/login', async (req, res) => {
+  const { ip, token } = req.body
+  TOKEN = token
+  const info = await login()
+  console.log(info)
+})
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   //解析excel, 获取到所有sheets

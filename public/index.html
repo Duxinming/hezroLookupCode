@@ -9,12 +9,24 @@
 
 <body>
     <button onclick="go('import')">点击</button>
+    <input id="ip" type="text" />
+    <input id="token" type="text">
+    <button onclick="login()">验证登录</button>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     function go (url) {
         window.location.href = `http://localhost:3000/${url}.html`
     }
 
+    function login () {
+        axios.post('/login', {
+            ip: document.getElementById('ip').value,
+            token: document.getElementById('token').value
+        }).then(res => {
+            console.log(res)
+        })
+    }
 </script>
 
 </html>
