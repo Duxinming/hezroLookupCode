@@ -16,14 +16,14 @@ const app = express()
 app.use(express.static('public'))
 app.use(bodyParser.json())
 
-const API_HOST = '192.168.84.17:30038'
+let API_HOST = '192.168.84.17:30038'
 let TOKEN = 'bd8cabb6-8431-42e1-8e77-96fc0ef2fb62'
 
 // excel文件类径
-const excelFilePath = './excel/lookUpCode.xlsx'
+// const excelFilePath = './excel/lookUpCode.xlsx'
 
 //解析excel, 获取到所有sheets
-const sheets = xlsx.parse(excelFilePath)
+// const sheets = xlsx.parse(excelFilePath)
 
 // 查看页面数
 // console.log(sheets.length)
@@ -87,6 +87,7 @@ const dataArr = []
 
 app.post('/login', async (req, res) => {
   const { ip, token } = req.body
+  API_HOST = ip
   TOKEN = token
   config = {
     headers: {
