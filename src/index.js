@@ -17,7 +17,7 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 
 let API_HOST = '192.168.84.17:30038'
-let TOKEN = 'bd8cabb6-8431-42e1-8e77-96fc0ef2fb62'
+let TOKEN = '2fa9a3a0-ed24-4536-9ef6-77c59b3d566e'
 
 // excel文件类径
 // const excelFilePath = './excel/lookUpCode.xlsx'
@@ -89,11 +89,11 @@ app.post('/login', async (req, res) => {
   const { ip, token } = req.body
   API_HOST = ip
   TOKEN = token
-  config = {
-    headers: {
-      Authorization: `bearer ${token}`,
-    },
-  }
+  //   config = {
+  //     headers: {
+  //       Authorization: `bearer ${token}`,
+  //     },
+  //   }
   //   const info = await login()
   if (info) {
     return res.json({
@@ -123,8 +123,8 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     })
   }
   const data = []
-  //   const lovInfo = await getLovInfo(lovCode)
-  //   console.log(lovInfo)
+  const lovInfo = await getLovInfo(lovCode)
+  console.log(lovInfo)
   info.forEach(([value, meaning, orderSeq, tag, description]) => {
     if (value) {
       data.push({
