@@ -51,12 +51,14 @@ const login = () => {
   console.log(11111)
   console.log(`http://${API_HOST}/iam/hzero/v1/users/self`)
   console.log(config)
-  return Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config).then(
-    (res) => {
+  return Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config)
+    .then((res) => {
       console.log(res)
       return res
-    }
-  )
+    })
+    .catch((err) => {
+      console.log(err)
+    })
 }
 
 const createLookupCode = (lovInfo) =>
