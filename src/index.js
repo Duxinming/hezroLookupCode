@@ -6,6 +6,8 @@ const Axios = require('axios')
 const express = require('express')
 // 引入 body-parser 模块
 const bodyParser = require('body-parser')
+// 引入 cors 模块
+const cors = require('cors')
 const multer = require('multer')
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
@@ -15,6 +17,13 @@ const { data, info } = require('./mock')
 const app = express()
 app.use(express.static('public'))
 app.use(bodyParser.json())
+//跨域问题解决方面
+app.use(
+  cors({
+    origin: ['http://43.142.69.36:80'], //可设置多个跨域域名
+    credentials: true, //允许客户端携带验证信息
+  })
+)
 
 let API_HOST = '192.168.84.17:30018'
 let TOKEN = '2fa9a3a0-ed24-4536-9ef6-77c59b3d566e'
@@ -127,7 +136,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   let lovId = null
   if (content.filter(({ enabledFlag }) => enabledFlag).length === 1) {
     isCreate = false
-    const { lovId: currentLovId } = content.filter(({ enabledFlag }) => enabledFlag)[0]
+    const { lovId: currentLovId } = content.filter(
+      ({ enabledFlag }) => enabledFlag
+    )[0]
     lovId = currentLovId
     const lovDteailRes = await getLovDteail(lovId)
     const {
@@ -142,7 +153,10 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       // 0 待创建 1 待更新
       let status = 0
       let obj = {}
-      if (lovValueData.length > 0 && lovValueData.filter((e) => e.value === value.toString()).length === 1) {
+      if (
+        lovValueData.length > 0 &&
+        lovValueData.filter((e) => e.value === value.toString()).length === 1
+      ) {
         obj = lovValueData.filter((e) => e.value === value.toString())[0]
         status = 1
       }
@@ -174,7 +188,10 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 })
 
 app.post('/import', async (req, res) => {
-  const { isCreate, lovInfo: { lovCode, lovName, data } } = req.body
+  const {
+    isCreate,
+    lovInfo: { lovCode, lovName, data },
+  } = req.body
   if (isCreate) {
     createLookupCode({
       lovCode,
@@ -184,26 +201,30 @@ app.post('/import', async (req, res) => {
       mustPageFlag: 1,
     }).then((r) => {
       if (r) {
-        Promise.all(data.map(async (item) => {
-          // 数组格式, 根据不同的索引取数据
-          return await createLookupCodeItem(item)
-        })).then(r => {
-          return res.json({ success: r.every(e => e) })
+        Promise.all(
+          data.map(async (item) => {
+            // 数组格式, 根据不同的索引取数据
+            return await createLookupCodeItem(item)
+          })
+        ).then((r) => {
+          return res.json({ success: r.every((e) => e) })
         })
       } else {
         return res.json({ success: false })
       }
     })
   } else {
-    Promise.all(data.map(async (item) => {
-      // 数组格式, 根据不同的索引取数据
-      if (item.status === 0) {
-        return await createLookupCodeItem(item)
-      } else {
-        return await updateLookupCodeItem(item)
-      }
-    })).then(r => {
-      return res.json({ success: r.every(e => e) })
+    Promise.all(
+      data.map(async (item) => {
+        // 数组格式, 根据不同的索引取数据
+        if (item.status === 0) {
+          return await createLookupCodeItem(item)
+        } else {
+          return await updateLookupCodeItem(item)
+        }
+      })
+    ).then((r) => {
+      return res.json({ success: r.every((e) => e) })
     })
   }
 })
