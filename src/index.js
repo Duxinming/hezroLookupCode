@@ -47,13 +47,17 @@ const getLovDteail = (lovId) =>
     config
   )
 
-const login = () =>
-  Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config).then(
+const login = () => {
+  console.log(11111)
+  console.log(`http://${API_HOST}/iam/hzero/v1/users/self`)
+  console.log(config)
+  return Axios.get(`http://${API_HOST}/iam/hzero/v1/users/self`, config).then(
     (res) => {
       console.log(res)
       return res
     }
   )
+}
 
 const createLookupCode = (lovInfo) =>
   Axios.post(
